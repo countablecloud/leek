@@ -292,7 +292,7 @@ def ensure_connection(target):
 
 def ensure_es_connection() -> Elasticsearch:
     logging.getLogger("elasticsearch").setLevel(logging.ERROR)
-    conn = Elasticsearch(LEEK_ES_URL, api_key=LEEK_ES_API_KEY)
+    conn = Elasticsearch(LEEK_ES_URL, api_key=LEEK_ES_API_KEY, verify_certs=False)
     for i in range(10):
         if conn.ping():
             logging.getLogger("elasticsearch").setLevel(logging.INFO)
