@@ -2,12 +2,12 @@ import json
 import logging
 import os
 import subprocess
+import time
 
 import requests
-import time
-from printy import printy
 from elasticsearch import Elasticsearch
 from ism_policy import setup_im_policy
+from printy import printy
 from utils import abort, logger
 
 """
@@ -33,7 +33,7 @@ ENABLE_WEB = get_bool("LEEK_ENABLE_WEB")
 ENABLE_DDTRACE = get_bool("LEEK_ENABLE_DDTRACE")
 LEEK_ES_URL = os.environ.get("LEEK_ES_URL", "http://0.0.0.0:9200")
 LEEK_ES_API_KEY = os.environ.get("LEEK_ES_API_KEY", None)
-LEEK_ES_VERIFY_CERTS = os.environ.get("LEEK_ES_VERIFY_CERTS", True)
+LEEK_ES_VERIFY_CERTS = get_bool("LEEK_ES_VERIFY_CERTS", default="false")
 LEEK_ES_IM_ENABLE = get_bool("LEEK_ES_IM_ENABLE", default="false")
 LEEK_ES_IM_SLACK_WEBHOOK_URL = os.environ.get("LEEK_ES_IM_SLACK_WEBHOOK_URL")
 LEEK_ES_IM_ROLLOVER_MIN_SIZE = os.environ.get("LEEK_ES_IM_ROLLOVER_MIN_SIZE")
@@ -45,15 +45,15 @@ LEEK_API_ENABLE_AUTH = get_bool("LEEK_API_ENABLE_AUTH", default="true")
 
 LOGO = """
 8 8888         8 8888888888   8 8888888888   8 8888     ,88'
-8 8888         8 8888         8 8888         8 8888    ,88' 
-8 8888         8 8888         8 8888         8 8888   ,88'  
-8 8888         8 8888         8 8888         8 8888  ,88'   
-8 8888         8 888888888888 8 888888888888 8 8888 ,88'    
-8 8888         8 8888         8 8888         8 8888 88'     
-8 8888         8 8888         8 8888         8 888888<      
-8 8888         8 8888         8 8888         8 8888 `Y8.    
-8 8888         8 8888         8 8888         8 8888   `Y8.  
-8 888888888888 8 888888888888 8 888888888888 8 8888     `Y8.                        
+8 8888         8 8888         8 8888         8 8888    ,88'
+8 8888         8 8888         8 8888         8 8888   ,88'
+8 8888         8 8888         8 8888         8 8888  ,88'
+8 8888         8 888888888888 8 888888888888 8 8888 ,88'
+8 8888         8 8888         8 8888         8 8888 88'
+8 8888         8 8888         8 8888         8 888888<
+8 8888         8 8888         8 8888         8 8888 `Y8.
+8 8888         8 8888         8 8888         8 8888   `Y8.
+8 888888888888 8 888888888888 8 888888888888 8 8888     `Y8.
 """
 USAGE = f"""
 [b>]|#|@     [y>]Leek Celery Monitoring Tool@                               [b>]|#|@
@@ -65,7 +65,7 @@ USAGE = f"""
 [b>]|#|@     [n>]Documentation:@ https://tryleek.com/docs/introduction/leek [b>]|#|@
 
 [r>]Author:@ Hamza Adami <me@adamihamza.com>
-[r>]Follow me on Github:@ https://github.com/kodless 
+[r>]Follow me on Github:@ https://github.com/kodless
 [r>]Buy me a coffee:@ https://buymeacoffee.com/fennec
 """
 SERVICES = f"""
