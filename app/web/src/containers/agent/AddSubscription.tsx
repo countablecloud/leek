@@ -106,6 +106,10 @@ const AddSubscription = (props) => {
           <Input placeholder="Exchange - default: celeryev" />
         </FormItem>
 
+        <FormItem name="exchange_type" rules={[]}>
+          <Input placeholder="Exchange Type - default: direct" />
+        </FormItem>
+
         <FormItem name="queue" rules={[]}>
           <Input placeholder="Queue - default: leek.fanout" />
         </FormItem>

@@ -4,7 +4,7 @@ title: Docker
 sidebar_label: Docker
 ---
 
-Leek is a full stack application built using different technologies and published as a docker image to a 
+Leek is a full stack application built using different technologies and published as a docker image to a
 [public repository](https://hub.docker.com/repository/docker/kodhive/leek) on DockerHub
 
 Leek is a multi-services application. during docker container startup, supervisord will start as the process with pid=1
@@ -43,7 +43,7 @@ This is an example of a demo, that includes 4 services:
 - Demo celery client (publisher)
 - Demo celery workers (consumer)
 
-- After running the services with `docker-compose up`, wait for the services to start and navigate to 
+- After running the services with `docker-compose up`, wait for the services to start and navigate to
 http://localhost:8000.
 
 - Create an application with the same name as in `LEEK_AGENT_SUBSCRIPTIONS`, which is `leek`.
@@ -79,6 +79,7 @@ services:
             "broker_management_url": "http://mq:15672",
             "backend": null,
             "exchange": "celeryev",
+            "exchange_type": "topic",
             "queue": "leek.fanout",
             "routing_key": "#",
             "org_name": "mono",
@@ -239,6 +240,7 @@ services:
             "broker_management_url": "http://mq:15672",
             "backend": null,
             "exchange": "celeryev",
+            "exchange_type": "topic",
             "queue": "leek.fanout",
             "routing_key": "#",
             "org_name": "example.com",

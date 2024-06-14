@@ -31,6 +31,7 @@ services:
             "broker_management_url": "http://mq:15672",
             "backend": null,
             "exchange": "celeryev",
+            "exchange_type": "topic",
             "queue": "leek.fanout",
             "routing_key": "#",
             "org_name": "obytes.com",
@@ -97,9 +98,13 @@ services:
       - cluster.initial_master_nodes=es01
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    command: ["elasticsearch", "-Elogger.level=ERROR"]
+    command: [ "elasticsearch", "-Elogger.level=ERROR" ]
     healthcheck:
-      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail localhost:9200/_cluster/health || exit 1"
+        ]
       interval: 30s
       timeout: 30s
       retries: 3

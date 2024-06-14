@@ -1,23 +1,22 @@
 import sys
 import time
-from urllib.parse import urljoin
 from collections import OrderedDict
-from typing import Dict, List, Union, Iterable
+from typing import Dict, Iterable, List, Union
+from urllib.parse import urljoin
 
 import requests
-from requests import adapters
+from kombu import Connection, Exchange, Queue
 from kombu.mixins import ConsumerMixin
-from kombu import Exchange, Queue, Connection
-
-from leek.agent.logger import get_logger
 from leek.agent.adapters.serializer import validate_payload
+from leek.agent.logger import get_logger
+from requests import adapters
 
 logger = get_logger(__name__)
 
 
 def flatten(obj: Iterable[Union[List[Dict], Dict]]) -> Iterable[Dict]:
     """Flatten a list using generators comprehensions.
-        Returns a flattened version of list lst.
+    Returns a flattened version of list lst.
     """
     for sublist in obj:
         if isinstance(sublist, list):
@@ -34,26 +33,27 @@ class LeekConsumer(ConsumerMixin):
     LEEK_WEBHOOKS_ENDPOINT = "/v1/events/process"
 
     def __init__(
-            self,
-            subscription_name,
-            # API
-            api_url: str = "http://api:5000",
-            org_name: str = "leek",
-            app_name: str = "leek",
-            app_key: str = "secret",
-            app_env: str = "qa",
-            # BROKER
-            broker: str = "amqp://guest:guest@localhost//",
-            broker_management_url: str = "http://localhost:15672",
-            backend: str = None,
-            exchange: str = "celeryev",
-            queue: str = "leek.fanout",
-            routing_key: str = "#",
-            prefetch_count: int = 1000,
-            concurrency_pool_size: int = 1,
-            batch_max_size_in_mb=1,
-            batch_max_number_of_messages=1000,
-            batch_max_window_in_seconds=5,
+        self,
+        subscription_name,
+        # API
+        api_url: str = "http://api:5000",
+        org_name: str = "leek",
+        app_name: str = "leek",
+        app_key: str = "secret",
+        app_env: str = "qa",
+        # BROKER
+        broker: str = "amqp://guest:guest@localhost//",
+        broker_management_url: str = "http://localhost:15672",
+        backend: str = None,
+        exchange: str = "celeryev",
+        exchange_type: str = "topic",
+        queue: str = "leek.fanout",
+        routing_key: str = "#",
+        prefetch_count: int = 1000,
+        concurrency_pool_size: int = 1,
+        batch_max_size_in_mb=1,
+        batch_max_number_of_messages=1000,
+        batch_max_window_in_seconds=5,
     ):
         """
         :param api_url: The URL of the API where to fanout events
@@ -64,6 +64,7 @@ class LeekConsumer(ConsumerMixin):
         :param broker: Broker url
         :param broker_management_url: Broker management url
         :param exchange: Exchange name, should be the same as workers event exchange
+        :param exchange_type: Exchange type, if rabbitmq should be one of topic, direct
         :param queue: Queue name
         :param routing_key: Routing key
         :param batch_max_size_in_mb: Maximum size of batch, should be less than Elasticsearch max batch size.
@@ -82,9 +83,11 @@ class LeekConsumer(ConsumerMixin):
         # API
         self.subscription_name = subscription_name
         self.prefetch_count = prefetch_count
-        logger.info(f"Building consumer "
-                    f"[Subscription={subscription_name}, "
-                    f"Prefetch={self.prefetch_count}, ")
+        logger.info(
+            f"Building consumer "
+            f"[Subscription={subscription_name}, "
+            f"Prefetch={self.prefetch_count}, "
+        )
 
         self.api_url = api_url
         self.app_name = app_name
@@ -95,7 +98,7 @@ class LeekConsumer(ConsumerMixin):
             "x-leek-org-name": org_name,
             "x-leek-app-name": app_name,
             "x-leek-app-key": app_key,
-            "x-leek-app-env": app_env
+            "x-leek-app-env": app_env,
         }
 
         # BROKER
@@ -105,9 +108,17 @@ class LeekConsumer(ConsumerMixin):
         # Therefore, at the time leek is up and start listening to events it will not be able
         # to process the events sent to redis when leek was down.
         # If you want the events to be persisted, use RabbitMQ instead!
-        self.event_type = "fanout" if self.connection.transport.driver_type == "redis" else "topic"
-        self.exchange = Exchange(exchange, self.event_type, durable=True, auto_delete=False)
-        self.queue = Queue(queue, exchange=self.exchange, routing_key=routing_key, durable=True, auto_delete=False)
+        self.exchange_type = exchange_type
+        self.exchange = Exchange(
+            exchange, self.exchange_type, durable=True, auto_delete=False
+        )
+        self.queue = Queue(
+            queue,
+            exchange=self.exchange,
+            routing_key=routing_key,
+            durable=True,
+            auto_delete=False,
+        )
         self.channel = None
 
         # CONNECTION TO BROKER
@@ -117,11 +128,10 @@ class LeekConsumer(ConsumerMixin):
         # CONNECTION TO API
         self.session = self.ensure_connection_to_api()
         adapter = adapters.HTTPAdapter(
-            pool_connections=concurrency_pool_size,
-            pool_maxsize=concurrency_pool_size
+            pool_connections=concurrency_pool_size, pool_maxsize=concurrency_pool_size
         )
-        self.session.mount('http://', adapter)
-        self.session.mount('https://', adapter)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
         self.retry = False
 
     def ensure_connection_to_broker(self):
@@ -154,12 +164,19 @@ class LeekConsumer(ConsumerMixin):
         if self.connection.transport.driver_type == "redis":
             channel.basic_qos(prefetch_size=0, prefetch_count=self.prefetch_count)
         else:
-            channel.basic_qos(prefetch_size=0, prefetch_count=self.prefetch_count, a_global=False)
+            channel.basic_qos(
+                prefetch_size=0, prefetch_count=self.prefetch_count, a_global=False
+            )
         self.channel = channel
         logger.info("Channel Configured...")
 
         logger.info("Creating consumer...")
-        consumer = Consumer(self.queue, callbacks=[self.on_message], accept=['json'], tag_prefix=self.subscription_name)
+        consumer = Consumer(
+            self.queue,
+            callbacks=[self.on_message],
+            accept=["json"],
+            tag_prefix=self.subscription_name,
+        )
         logger.info("Consumer created!")
         return [consumer]
 
@@ -176,7 +193,9 @@ class LeekConsumer(ConsumerMixin):
                 logger.debug("BATCH: maximum size in mb reached, send!")
             elif len(self.batch) >= self.batch_max_number_of_messages:
                 logger.debug("BATCH: maximum number of messages reached, send!")
-            elif (time.time() - self.batch_last_sent_at) >= self.batch_max_window_in_seconds:
+            elif (
+                time.time() - self.batch_last_sent_at
+            ) >= self.batch_max_window_in_seconds:
                 logger.debug("BATCH: maximum wait window reached, send!")
             else:
                 logger.debug(f"BATCH: not yet fulfilled, {len(self.batch)} skip!")
@@ -240,12 +259,15 @@ class LeekConsumer(ConsumerMixin):
             if response.status_code in self.SUCCESS_STATUS_CODES:
                 # noinspection PyBroadException
                 try:
-                    logger.debug("--- Processed by API in %s seconds ---" % (time.time() - start_time))
+                    logger.debug(
+                        "--- Processed by API in %s seconds ---"
+                        % (time.time() - start_time)
+                    )
                     if response.status_code == 201:
                         self.ack()
                     return
                 except Exception as ex:
-                    logger.error(f"Unhealthy connection!")
+                    logger.error("Unhealthy connection!")
                     logger.error(ex)
         self.backoff()
 
