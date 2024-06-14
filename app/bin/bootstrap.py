@@ -37,8 +37,12 @@ LEEK_ES_VERIFY_CERTS = get_bool("LEEK_ES_VERIFY_CERTS", default="false")
 LEEK_ES_IM_ENABLE = get_bool("LEEK_ES_IM_ENABLE", default="false")
 LEEK_ES_IM_SLACK_WEBHOOK_URL = os.environ.get("LEEK_ES_IM_SLACK_WEBHOOK_URL")
 LEEK_ES_IM_ROLLOVER_MIN_SIZE = os.environ.get("LEEK_ES_IM_ROLLOVER_MIN_SIZE")
-LEEK_ES_IM_ROLLOVER_MIN_DOC_COUNT = int(os.environ.get("LEEK_ES_IM_ROLLOVER_MIN_DOC_COUNT", 0))
-LEEK_ES_IM_DELETE_MIN_INDEX_AGE = os.environ.get("LEEK_ES_IM_DELETE_MIN_INDEX_AGE", "7d")
+LEEK_ES_IM_ROLLOVER_MIN_DOC_COUNT = int(
+    os.environ.get("LEEK_ES_IM_ROLLOVER_MIN_DOC_COUNT", 0)
+)
+LEEK_ES_IM_DELETE_MIN_INDEX_AGE = os.environ.get(
+    "LEEK_ES_IM_DELETE_MIN_INDEX_AGE", "7d"
+)
 LEEK_API_URL = os.environ.get("LEEK_API_URL", "http://0.0.0.0:5000")
 LEEK_WEB_URL = os.environ.get("LEEK_WEB_URL", "http://0.0.0.0:8000")
 LEEK_API_ENABLE_AUTH = get_bool("LEEK_API_ENABLE_AUTH", default="true")
@@ -85,10 +89,12 @@ ADAPT/VALIDATE VARIABLES
 """
 
 if ENABLE_ES:
-    logger.warning("Starting from version 0.4.0 local elasticsearch is deprecated! This is to "
-                   "improve leek docker image size.\n"
-                   "If you are still interested in local elasticsearch you can use the official "
-                   "ES docker image to run a sidecar elasticsearch container.")
+    logger.warning(
+        "Starting from version 0.4.0 local elasticsearch is deprecated! This is to "
+        "improve leek docker image size.\n"
+        "If you are still interested in local elasticsearch you can use the official "
+        "ES docker image to run a sidecar elasticsearch container."
+    )
 
 # WEB VARIABLES
 if ENABLE_WEB:
@@ -98,13 +104,18 @@ if ENABLE_WEB:
             LEEK_FIREBASE_APP_ID = os.environ.get("LEEK_FIREBASE_APP_ID")
             LEEK_FIREBASE_API_KEY = os.environ.get("LEEK_FIREBASE_API_KEY")
             LEEK_FIREBASE_AUTH_DOMAIN = os.environ.get("LEEK_FIREBASE_AUTH_DOMAIN")
-            none_fb_prams = [LEEK_FIREBASE_PROJECT_ID, LEEK_FIREBASE_APP_ID, LEEK_FIREBASE_API_KEY,
-                             LEEK_FIREBASE_AUTH_DOMAIN].count(None)
+            none_fb_prams = [
+                LEEK_FIREBASE_PROJECT_ID,
+                LEEK_FIREBASE_APP_ID,
+                LEEK_FIREBASE_API_KEY,
+                LEEK_FIREBASE_AUTH_DOMAIN,
+            ].count(None)
             if 1 <= none_fb_prams <= 3:
                 abort(
-                    "If one of [LEEK_FIREBASE_PROJECT_ID, LEEK_FIREBASE_APP_ID, LEEK_FIREBASE_API_KEY, "
-                    "LEEK_FIREBASE_AUTH_DOMAIN] is provided all should be provided, Or if you want to "
-                    "use default firebase project do not set any of these env variables"
+                    "If one of [LEEK_FIREBASE_PROJECT_ID, LEEK_FIREBASE_APP_ID, "
+                    "LEEK_FIREBASE_API_KEY, LEEK_FIREBASE_AUTH_DOMAIN] is provided all should "
+                    "be provided, Or if you want to use default firebase project do not set any "
+                    "of these env variables"
                 )
 
             if none_fb_prams == 4:
@@ -115,15 +126,15 @@ if ENABLE_WEB:
                 "LEEK_API_URL": "{LEEK_API_URL}",
                 "LEEK_API_ENABLE_AUTH": "true",
                 "LEEK_FIREBASE_PROJECT_ID": "{LEEK_FIREBASE_PROJECT_ID or "kodhive-leek"}",
-                "LEEK_FIREBASE_APP_ID": "{LEEK_FIREBASE_APP_ID or "1:894368938723:web:e14677d1835ce9bd09e3d6"}",
-                "LEEK_FIREBASE_API_KEY": "{LEEK_FIREBASE_API_KEY or "AIzaSyBiv9xF6VjDsv62ufzUb9aFJUreHQaFoDk"}",
-                "LEEK_FIREBASE_AUTH_DOMAIN": "{LEEK_FIREBASE_AUTH_DOMAIN or "kodhive-leek.firebaseapp.com"}",
+                "LEEK_FIREBASE_APP_ID": "{LEEK_FIREBASE_APP_ID}",
+                "LEEK_FIREBASE_API_KEY": "{LEEK_FIREBASE_API_KEY}",
+                "LEEK_FIREBASE_AUTH_DOMAIN": "{LEEK_FIREBASE_AUTH_DOMAIN}",
                 "LEEK_VERSION": "{LEEK_VERSION}",
             }};
             """
 
             web_conf_file = "/opt/app/public/leek-config.js"
-            with open(web_conf_file, 'w') as f:
+            with open(web_conf_file, "w") as f:
                 f.write(web_conf)
         else:
             logger.warning("Using default firebase project for authentication!")
@@ -137,7 +148,7 @@ if ENABLE_WEB:
         """
 
         web_conf_file = "/opt/app/public/leek-config.js"
-        with open(web_conf_file, 'w') as f:
+        with open(web_conf_file, "w") as f:
             f.write(web_conf)
 
 
@@ -150,41 +161,57 @@ def infer_subscription_tags(subscription_name: str):
     return app_name, app_env
 
 
-def validate_subscriptions(subs):
+def validate_subscriptions(subs):  # noqa:C901
     # Validate type
     if isinstance(subs, dict):
-        abort(f"Passing agent subscriptions as dict is deprecated, "
-              f"now it should be provided as a list of subscriptions!")
+        abort(
+            "Passing agent subscriptions as dict is deprecated, "
+            "now it should be provided as a list of subscriptions!"
+        )
 
     if not isinstance(subs, list):
-        abort(f"Agent subscriptions should be a list of subscriptions!")
+        abort("Agent subscriptions should be a list of subscriptions!")
 
     # Validate required fields
     for subscription in subs:
         required_keys = [
-            "broker", "broker_management_url", "exchange", "queue", "routing_key", "org_name",
-            "app_name", "app_env",  # "app_key", "api_url"
+            "broker",
+            "broker_management_url",
+            "exchange",
+            "exchange_type",
+            "queue",
+            "routing_key",
+            "org_name",
+            "app_name",
+            "app_env",  # "app_key", "api_url"
         ]
         keys = subscription.keys()
         if not all(required_key in keys for required_key in required_keys):
-            abort(f"Agent subscription configuration is invalid")
+            abort("Agent subscription configuration is invalid")
 
-        if not (subscription["app_name"].isalpha() and subscription["app_name"].islower()):
-            abort(f"app_name value should be lowercase alphabetic string")
+        if not (
+            subscription["app_name"].isalpha() and subscription["app_name"].islower()
+        ):
+            abort("app_name value should be lowercase alphabetic string")
 
-        if not (subscription["app_env"].isalpha() and subscription["app_env"].islower()):
-            abort(f"app_env value should be lowercase alphabetic string")
+        if not (
+            subscription["app_env"].isalpha() and subscription["app_env"].islower()
+        ):
+            abort("app_env value should be lowercase alphabetic string")
 
     # Validate uniqueness
     unique_counts = {}
     for subscription in subs:
-        unique_counts[infer_subscription_name(subscription)] = unique_counts.get(
-            infer_subscription_name(subscription), 0) + 1
+        unique_counts[infer_subscription_name(subscription)] = (
+            unique_counts.get(infer_subscription_name(subscription), 0) + 1
+        )
     for subscription_name, count in unique_counts.items():
         if count > 1:
             app_name, app_env = infer_subscription_tags(subscription_name)
-            abort(f"{count} subscriptions with the same app name [{app_name}]"
-                  f" and app env [{app_env}] defined multiple times!")
+            abort(
+                f"{count} subscriptions with the same app name [{app_name}]"
+                f" and app env [{app_env}] defined multiple times!"
+            )
 
     if ENABLE_API:
         # Agent and API in the same runtime, prepare a shared secret for communication between them
@@ -192,9 +219,12 @@ def validate_subscriptions(subs):
             try:
                 subscription["app_key"] = os.environ["LEEK_AGENT_API_SECRET"]
             except KeyError:
-                abort("Agent and API are both enabled in same container, LEEK_AGENT_API_SECRET env variable should "
-                      "be specified for inter-communication between agent and API")
-            # Use local API URL not from LEEK_API_URL env var, LEEK_API_URL is used by Web app (browser)
+                abort(
+                    "Agent and API are both enabled in same container, LEEK_AGENT_API_SECRET "
+                    "env variable should be specified for inter-communication between agent and API"
+                )
+            # Use local API URL not from LEEK_API_URL env var
+            # LEEK_API_URL is used by Web app (browser)
             subscription["api_url"] = "http://0.0.0.0:5000"
 
     # Optional settings
@@ -202,23 +232,45 @@ def validate_subscriptions(subs):
         subscription.setdefault("concurrency_pool_size", 1)
         subscription.setdefault("prefetch_count", 1000)
         subscription.setdefault("batch_max_size_in_mb", 1)
-        subscription.setdefault("batch_max_number_of_messages", subscription["prefetch_count"])
+        subscription.setdefault(
+            "batch_max_number_of_messages", subscription["prefetch_count"]
+        )
         subscription.setdefault("batch_max_window_in_seconds", 5)
 
         if not LEEK_API_ENABLE_AUTH:
             subscription["org_name"] = "mono"
 
-        if subscription["prefetch_count"] < 1000 or subscription["prefetch_count"] > 10000:
-            abort("Subscription prefetch_count should be between 1,000 and 10,000 messages!")
+        if (
+            subscription["prefetch_count"] < 1000
+            or subscription["prefetch_count"] > 10000
+        ):
+            abort(
+                "Subscription prefetch_count should be between 1,000 and 10,000 messages!"
+            )
 
-        if subscription["batch_max_size_in_mb"] < 1 or subscription["batch_max_size_in_mb"] > 10:
-            abort("Subscription batch_max_size_in_mb should be between 1 and 10 megabytes!")
+        if (
+            subscription["batch_max_size_in_mb"] < 1
+            or subscription["batch_max_size_in_mb"] > 10
+        ):
+            abort(
+                "Subscription batch_max_size_in_mb should be between 1 and 10 megabytes!"
+            )
 
-        if subscription["batch_max_number_of_messages"] > subscription["prefetch_count"]:
-            abort("Subscription batch_max_number_of_messages should be <= prefetch_count!")
+        if (
+            subscription["batch_max_number_of_messages"]
+            > subscription["prefetch_count"]
+        ):
+            abort(
+                "Subscription batch_max_number_of_messages should be <= prefetch_count!"
+            )
 
-        if subscription["batch_max_window_in_seconds"] < 5 or subscription["batch_max_window_in_seconds"] > 20:
-            abort("Subscription batch_max_window_in_seconds should be between 5 and 20 seconds!")
+        if (
+            subscription["batch_max_window_in_seconds"] < 5
+            or subscription["batch_max_window_in_seconds"] > 20
+        ):
+            abort(
+                "Subscription batch_max_window_in_seconds should be between 5 and 20 seconds!"
+            )
     return subs
 
 
@@ -232,7 +284,7 @@ if ENABLE_AGENT:
         except json.decoder.JSONDecodeError:
             abort("LEEK_AGENT_SUBSCRIPTIONS env var should be a valid json string!")
         subscriptions = validate_subscriptions(subscriptions)
-        with open(subscriptions_file, 'w') as f:
+        with open(subscriptions_file, "w") as f:
             json.dump(subscriptions, f, indent=4, sort_keys=False)
     else:
         with open(subscriptions_file) as s:
@@ -242,10 +294,12 @@ if ENABLE_AGENT:
                 abort("Subscription file should be a valid json file!")
             subscriptions = validate_subscriptions(subscriptions)
         if not len(subscriptions):
-            logger.warning(f"LEEK_AGENT_SUBSCRIPTIONS environment variable is not set, and subscriptions file does not "
-                           f"declare any subscriptions, Try adding subscriptions statically via env variable or "
-                           f"dynamically via agent page {LEEK_WEB_URL}.")
-        with open(subscriptions_file, 'w') as f:
+            logger.warning(
+                "LEEK_AGENT_SUBSCRIPTIONS environment variable is not set, and subscriptions file "
+                "does not declare any subscriptions, Try adding subscriptions statically via env "
+                f"variable or dynamically via agent page {LEEK_WEB_URL}."
+            )
+        with open(subscriptions_file, "w") as f:
             json.dump(subscriptions, f, indent=4, sort_keys=False)
 
 """
@@ -254,30 +308,26 @@ START SERVICES AND ENSURE CONNECTIONS BETWEEN THEM
 
 
 def create_painless_scripts(conn: Elasticsearch):
-    with open('/opt/app/conf/painless/TaskMerge.groovy', 'r') as script:
+    with open("/opt/app/conf/painless/TaskMerge.groovy", "r") as script:
         task_merge_source = script.read()
 
-    with open('/opt/app/conf/painless/WorkerMerge.groovy', 'r') as script:
+    with open("/opt/app/conf/painless/WorkerMerge.groovy", "r") as script:
         worker_merge_source = script.read()
 
     try:
-        t = conn.put_script(id="task-merge", body={
-            "script": {
-                "lang": "painless",
-                "source": task_merge_source
-            }
-        })
-        w = conn.put_script(id="worker-merge", body={
-            "script": {
-                "lang": "painless",
-                "source": worker_merge_source
-            }
-        })
+        t = conn.put_script(
+            id="task-merge",
+            body={"script": {"lang": "painless", "source": task_merge_source}},
+        )
+        w = conn.put_script(
+            id="worker-merge",
+            body={"script": {"lang": "painless", "source": worker_merge_source}},
+        )
         if t["acknowledged"] is True and w["acknowledged"] is True:
             return
     except Exception:
         pass
-    abort(f"Could not create painless scripts!")
+    abort("Could not create painless scripts!")
 
 
 def ensure_connection(target):
@@ -285,7 +335,7 @@ def ensure_connection(target):
         try:
             requests.options(url=target).raise_for_status()
             return
-        except Exception as e:
+        except Exception:
             time.sleep(5)
             continue
     abort(f"Could not connect to target {target}")
@@ -293,7 +343,9 @@ def ensure_connection(target):
 
 def ensure_es_connection() -> Elasticsearch:
     logging.getLogger("elasticsearch").setLevel(logging.ERROR)
-    conn = Elasticsearch(LEEK_ES_URL, api_key=LEEK_ES_API_KEY, verify_certs=LEEK_ES_VERIFY_CERTS)
+    conn = Elasticsearch(
+        LEEK_ES_URL, api_key=LEEK_ES_API_KEY, verify_certs=LEEK_ES_VERIFY_CERTS
+    )
     for i in range(10):
         if conn.ping():
             logging.getLogger("elasticsearch").setLevel(logging.INFO)
@@ -313,7 +365,7 @@ if ENABLE_API:
         rollover_min_size=LEEK_ES_IM_ROLLOVER_MIN_SIZE,
         rollover_min_doc_count=LEEK_ES_IM_ROLLOVER_MIN_DOC_COUNT,
         delete_min_index_age=LEEK_ES_IM_DELETE_MIN_INDEX_AGE,
-        slack_webhook_url=LEEK_ES_IM_SLACK_WEBHOOK_URL
+        slack_webhook_url=LEEK_ES_IM_SLACK_WEBHOOK_URL,
     )
     # Creates painless scripts used for merges
     create_painless_scripts(connection)
@@ -322,14 +374,16 @@ if ENABLE_API:
     # Start API process
     subprocess.run(["supervisorctl", "start", "api"])
     # Make sure the API is up before starting the agent
-    ensure_connection(f"http://0.0.0.0:5000/v1/events/process")
+    ensure_connection("http://0.0.0.0:5000/v1/events/process")
 
 if ENABLE_AGENT:
     # Start agent.
-    # If you don't have access to brokers infrastructure, you can setup standalone agent on third party infra
+    # If you don't have access to brokers infrastructure
+    # you can setup standalone agent on third party infra
     subprocess.run(["supervisorctl", "start", "agent"])
 
 if ENABLE_WEB:
     # Start web application
-    # If you don't want to spin up the web with the same runtime as API, you can deploy it on a cdn like Netlify
+    # If you don't want to spin up the web with the same runtime as API
+    # you can deploy it on a cdn like Netlify
     subprocess.run(["supervisorctl", "start", "web"])

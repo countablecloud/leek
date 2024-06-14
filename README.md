@@ -10,7 +10,7 @@
     <br>
     <span>Documentation: https://tryleek.com</span>
     <br>
-  
+
 [![Docs Build Status][docs-build-badge]][docs-build]
 [![App Build Status][app-build-badge]][app-build]
 [![Python 3.8][version-badge]][package]
@@ -28,61 +28,61 @@
 
 ### What is Leek?
 
-Leek is a celery tasks monitoring tool, the main difference between Leek and other monitoring tools is that Leek can 
-connect to and monitor many brokers with a single container whereas other tools can monitor only a single broker at a 
+Leek is a celery tasks monitoring tool, the main difference between Leek and other monitoring tools is that Leek can
+connect to and monitor many brokers with a single container whereas other tools can monitor only a single broker at a
 time.
 
-Also leek supports environments branching, multiple applications, Google SSO, charts, issues monitoring, advanced 
-filtering and search, indexation and persistence, slack notifications and provides an awesome UI for a better user 
+Also leek supports environments branching, multiple applications, Google SSO, charts, issues monitoring, advanced
+filtering and search, indexation and persistence, slack notifications and provides an awesome UI for a better user
 experience.
 
-Leek came to remediate the issues found with other celery monitoring tools and provide a reliable results and cool 
+Leek came to remediate the issues found with other celery monitoring tools and provide a reliable results and cool
 features to ease the process of monitoring your celery cluster, finding and respond to issues quickly.
 
 ### What Leek is not?
 
-Leek is not a celery tasks/workers control tool and you cannot use leek to revoke/terminate/start tasks, restart your 
+Leek is not a celery tasks/workers control tool and you cannot use leek to revoke/terminate/start tasks, restart your
 workers fleet, or manage your brokers. however control features could be supported with future releases.
 
 Leek is not a package that can be installed/imported but a full stack application published as a docker image.
 
 ### Features
 
-As opposed to many other alternatives, leek came to fix the issues existing in other tools and offer many other cool 
+As opposed to many other alternatives, leek came to fix the issues existing in other tools and offer many other cool
 features that does not exist in other tools:
 
 - `Google SSO` - you can connect to leek using GSuite accounts for organizations and standard GMail accounts for
 individuals.
 
-- `Multi brokers support` - other monitoring tools can connect to only one broker at a time, which enforces you to 
-deploy many instances to monitor them all. however, Leek with its Agent, it can monitor tasks from multiple brokers with 
+- `Multi brokers support` - other monitoring tools can connect to only one broker at a time, which enforces you to
+deploy many instances to monitor them all. however, Leek with its Agent, it can monitor tasks from multiple brokers with
 only a single instance of leek.
 
-- `Multi ENVs support` - when connecting Leek agent to brokers, you can specify an environment tag for that broker and 
-each event sent from that broker will be tagged with that environment name, allowing you to split celery events into 
+- `Multi ENVs support` - when connecting Leek agent to brokers, you can specify an environment tag for that broker and
+each event sent from that broker will be tagged with that environment name, allowing you to split celery events into
 qa, stg, prod subsets so later you can filter task by environment name.
 
-- `Enhanced storage` - unlike other alternatives that stores the events in volatile RAM, celery events are indexed to 
+- `Enhanced storage` - unlike other alternatives that stores the events in volatile RAM, celery events are indexed to
 elasticsearch to offer persistence and fast retrieval/search.
 
-- `Beatiful UI` - unlike other alternatives which are either a command line tool or have an ugly UI, Leek offers a 
+- `Beatiful UI` - unlike other alternatives which are either a command line tool or have an ugly UI, Leek offers a
 great user experience thanks to its beautiful well designed UI.
 
 - `Notification` - you can define notification rules that will trigger a slack notification to inform you about critical
-events, the notification triggers rules can match against task state, task name exclusion/exclusions, environment name, 
+events, the notification triggers rules can match against task state, task name exclusion/exclusions, environment name,
 and runtime upper bound.
 
-- `Monitor Issues` - Leek can also monitor issues by aggregating the failed tasks by exception name, and for each 
+- `Monitor Issues` - Leek can also monitor issues by aggregating the failed tasks by exception name, and for each
 exception it will calculate occurrences, recovered, pending, failed and critical exceptions.
 
-- `Charts` - Leek generate multiple charts giving you an idea about the application state, these chart includes: 
+- `Charts` - Leek generate multiple charts giving you an idea about the application state, these chart includes:
 tasks states distribution, tasks queues distribution, top 5 executed tasks, top 5 slow tasks, tasks execution over time,
 tasks queue over time, tasks failure over time ...
 
 - `Filter by anything` - unlike other alternatives that doesn't provide a good support for filters, leek provides a wide
 range of filters.
 
-- `Tasks control` - for now leek can retry tasks only, more tasks/workers control features may be introduced in the 
+- `Tasks control` - for now leek can retry tasks only, more tasks/workers control features may be introduced in the
   future.
 
 
@@ -111,7 +111,7 @@ This is an example of a demo, that includes 4 services:
 - Demo celery client (publisher)
 - Demo celery workers (consumer)
 
-- After running the services with `docker-compose up`, wait for the services to start and navigate to 
+- After running the services with `docker-compose up`, wait for the services to start and navigate to
 http://0.0.0.0:8000.
 
 - Create an application with the same name as in `LEEK_AGENT_SUBSCRIPTIONS`, which is `leek`.
@@ -147,6 +147,7 @@ services:
             "broker_management_url": "http://mq:15672",
             "backend": null,
             "exchange": "celeryev",
+            "exchange_type": "topic",
             "queue": "leek.fanout",
             "routing_key": "#",
             "org_name": "mono",

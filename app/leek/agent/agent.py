@@ -1,22 +1,20 @@
-import gevent
-from gevent import monkey
-monkey.patch_all()
-
 import json
-from signal import signal, SIGTERM
 from multiprocessing import Process
+from signal import SIGTERM, signal
 
-from leek.agent.logger import get_logger
+from gevent import monkey
 from leek.agent.consumer import LeekConsumer
+from leek.agent.logger import get_logger
 
+monkey.patch_all()
 logger = get_logger(__name__)
 
 
 class LeekAgent:
     """Main server object, which:
-        - Load subscriptions from config file.
-        - Orchestrates capturing of celery events.
-        - Fanout to API webhooks endpoints
+    - Load subscriptions from config file.
+    - Orchestrates capturing of celery events.
+    - Fanout to API webhooks endpoints
     """
 
     def __init__(self):
@@ -26,7 +24,10 @@ class LeekAgent:
         self.loop = None
 
         if not len(self.subscriptions):
-            logger.warning("No subscriptions found, Consider adding subscriptions through environment variable or UI.")
+            logger.warning(
+                "No subscriptions found, Consider adding"
+                "subscriptions through environment variable or UI."
+            )
             return
 
         logger.info("Building consumers...")
@@ -42,7 +43,7 @@ class LeekAgent:
 
     @staticmethod
     def load_subscriptions():
-        logger.info(f"Loading subscriptions...")
+        logger.info("Loading subscriptions...")
 
         # FROM JSON FILE
         subscriptions_file = "/opt/app/conf/subscriptions.json"
@@ -76,5 +77,5 @@ class LeekAgent:
             p.kill()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     LeekAgent().start()

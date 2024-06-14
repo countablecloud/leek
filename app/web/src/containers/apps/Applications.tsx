@@ -56,6 +56,7 @@ const agentSubscriptionsSnippet = (app) => {
             "broker_management_url": "http://mq:15672",
             "backend": null,
             "exchange": "celeryev",
+            "exchange_type": "topic",
             "queue": "leek.fanout",
             "routing_key": "#",
             "org_name": "${inferOrgName()}",
